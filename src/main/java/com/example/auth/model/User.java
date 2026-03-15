@@ -1,4 +1,5 @@
 package com.example.auth.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,10 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
 public class User implements UserDetails {
 
     @Id
@@ -23,46 +28,39 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String password;
 
-    @ElementCollection(name = "user_roles",
-    joinColumns = @JoinColumn(name = "user_id"))
-    Column(name = "role")
-    @Enumerated(EnumType.SRTING)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
     private Set<Role> roles;
 
-    // Поля для Spring Security - стандартные флаги
     private boolean enabled = true;
-    private boolean accountExpored = true;
+    private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
 
-    // Даты для аудита
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Spring вызовет этот метод ДО сохранения в БД
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    // Spring вызовет этот метод ПРИ обновлении
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
-    // Методы из интерфейса UserDetails
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Преобразуем наши роли в формат, понятный Spring Security
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.name()))
                 .collect(Collectors.toList());
@@ -88,4 +86,3 @@ public class User implements UserDetails {
         return enabled;
     }
 }
-
