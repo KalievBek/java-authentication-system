@@ -15,13 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration  // класс конфигурации Spring
-@EnableWebSecurity  // включает поддержку Spring Security
-@EnableMethodSecurity  // включает @PreAuthorize для защиты методов
-@RequiredArgsConstructor  // создает конструктор для final полей
+@Configuration // класс конфигурации Spring
+@EnableWebSecurity // включает поддержку Spring Security
+@EnableMethodSecurity // включает @PreAuthorize для защиты методов
+@RequiredArgsConstructor // создает конструктор для final полей
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;  // наш фильтр для JWT
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // наш фильтр для JWT
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,9 +30,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 // делаем сессию stateless (не храним состояние)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // настройка доступа к endpoints
                 .authorizeHttpRequests(auth -> auth
@@ -42,11 +40,10 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
 
                         // все остальные запросы требуют аутентификации
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
                 // для H2 консоли (чтобы работала)
-                .headers(headers -> headers.frameOptions().disable())
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
 
                 // добавляем наш JWT фильтр перед стандартным фильтром
                 .addFilterBefore(jwtAuthenticationFilter,
@@ -63,6 +60,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();  // шифрование паролей
+        return new BCryptPasswordEncoder(); // шифрование паролей
     }
 }

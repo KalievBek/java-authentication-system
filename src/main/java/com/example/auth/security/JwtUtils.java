@@ -1,4 +1,5 @@
 package com.example.auth.security;
+
 // Импорты для работы с JWT
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -14,17 +15,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Component  // Spring создаст бин этого класса
-@Slf4j      // Lombok добавит логгер
+@Component // Spring создаст бин этого класса
 
 public class JwtUtils {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtUtils.class);
 
     // Читаем настройки из application.properties
     @Value("${jwt.secret}")
-    private String jwtSecret;  // секретный ключ для подписи токенов
+    private String jwtSecret; // секретный ключ для подписи токенов
 
     @Value("${jwt.expiration}")
-    private int jwtExpirationMs;  // срок жизни токена в миллисекундах
+    private int jwtExpirationMs; // срок жизни токена в миллисекундах
 
     /**
      * Создает ключ для подписи из секретной строки
@@ -47,9 +48,9 @@ public class JwtUtils {
 
         // Собираем токен
         return Jwts.builder()
-                .setClaims(claims)                    // добавляем данные
+                .setClaims(claims) // добавляем данные
                 .setSubject(userPrincipal.getUsername()) // главное поле - логин
-                .setIssuedAt(new Date())              // время создания
+                .setIssuedAt(new Date()) // время создания
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs)) // время истечения
                 .signWith(key(), SignatureAlgorithm.HS256) // подписываем
                 .compact(); // собираем в строку
@@ -75,7 +76,7 @@ public class JwtUtils {
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key())  // ключ для проверки подписи
+                .setSigningKey(key()) // ключ для проверки подписи
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -87,7 +88,7 @@ public class JwtUtils {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parse(token);
-            return true;  // токен правильный
+            return true; // токен правильный
         } catch (MalformedJwtException e) {
             log.error("Неверный JWT токен: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
@@ -97,6 +98,6 @@ public class JwtUtils {
         } catch (IllegalArgumentException e) {
             log.error("JWT claims строка пустая: {}", e.getMessage());
         }
-        return false;  // токен неправильный
+        return false; // токен неправильный
     }
 }

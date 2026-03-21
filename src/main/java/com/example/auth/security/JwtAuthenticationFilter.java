@@ -23,20 +23,24 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component  // Spring создаст бин этого класса
-@RequiredArgsConstructor  // Lombok создаст конструктор для всех final полей
-@Slf4j      // Lombok добавит логгер
+@Component // Spring создаст бин этого класса
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     // OncePerRequestFilter - фильтр, который выполняется 1 раз для каждого запроса
 
     // Зависимости, которые Spring внедрит через конструктор
-    private final JwtUtils jwtUtils;  // наш класс для работы с JWT
-    private final UserDetailsService userDetailsService;  // сервис для загрузки пользователя из БД
+    private final JwtUtils jwtUtils; // наш класс для работы с JWT
+    private final UserDetailsService userDetailsService; // сервис для загрузки пользователя из БД
+
+    public JwtAuthenticationFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService) {
+        this.jwtUtils = jwtUtils;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         try {
@@ -53,17 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 // 5. Создаем объект аутентификации
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
                 // 6. Добавляем детали запроса (IP, сессию и т.д.)
                 authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                        new WebAuthenticationDetailsSource().buildDetails(request));
 
                 // 7. Сохраняем аутентификацию в SecurityContext
                 // Теперь Spring Security знает, что пользователь авторизован
@@ -92,6 +93,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return headerAuth.substring(7);
         }
 
-        return null;  // токена нет
+        return null; // токена нет
     }
 }
