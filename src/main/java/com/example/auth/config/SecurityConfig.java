@@ -35,6 +35,7 @@ public class SecurityConfig {
                 // настройка доступа к endpoints
                 .authorizeHttpRequests(auth -> auth
                         // публичные endpoints (доступны всем)
+                        .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/public").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()

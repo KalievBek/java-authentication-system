@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVER - Система Аутентификации</title>
+    <!-- Подключаем современный шрифт -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Базовые стили и переменные */
+        :root {
+            --primary-bg: #0f172a; /* Темно-синий фон */
+            --accent-color: #6366f1; /* Индиго */
+            --accent-hover: #4f46e5;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Анимированные круги на фоне */
+        .bg-shape {
+            position: absolute;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .bg-shape-1 {
+            width: 300px;
+            height: 300px;
+            background: #4f46e5;
+            top: 10%;
+            left: 20%;
+        }
+        .bg-shape-2 {
+            width: 400px;
+            height: 400px;
+            background: #8b5cf6;
+            bottom: 10%;
+            right: 15%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-30px) scale(1.1); }
+        }
+
+        /* Контейнер приложения */
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Переключатель Логин / Регистрация */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 0.3rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .tab.active {
+            color: white;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            top: 0.3rem;
+            bottom: 0.3rem;
+            left: 0.3rem;
+            width: calc(50% - 0.3rem);
+            background: var(--accent-color);
+            border-radius: 8px;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 0;
+        }
+
+        /* Формы */
+        .form-wrapper {
+            position: relative;
+            overflow: hidden;
+            min-height: 280px;
+        }
+
+        .form-section {
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: all 0.4s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px);
+        }
+
+        .form-section.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+            position: relative;
+        }
+
+        .form-section.inactive-left {
+            transform: translateX(-30px);
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Уведомления */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--accent-color);
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.success {
+            border-left-color: #10b981;
+        }
+
+        /* Состояние после входа */
+        .dashboard-container {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .dashboard-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem auto;
+            color: white;
+        }
+
+        .user-info {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .user-info div {
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.8rem;
+        }
+
+        .user-info div:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: white;
+        }
+
+        .btn-outline:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn.loading .loader { display: inline-block; }
+        .btn.loading .btn-text { display: none; }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Информация о JWT */
+        .token-box {
+            margin-top: 1.5rem;
+            position: relative;
+        }
+        
+        .token-box label {
+            display: block;
+            text-align: left;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .token-input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: #10b981;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            resize: none;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Бекграунд декорации -->
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
+
+    <!-- Уведомления -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Сообщение</span>
+    </div>
+
+    <!-- Контейнер Авторизации -->
+    <div class="app-container" id="authContainer">
+        <div class="header">
+            <h1>Добро пожаловать</h1>
+            <p>Войдите в систему или создайте аккаунт</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Вход</div>
+            <div class="tab" onclick="switchTab('register')">Регистрация</div>
+            <div class="tab-indicator" id="tabIndicator"></div>
+        </div>
+
+        <div class="form-wrapper">
+            <!-- ВХОД -->
+            <div class="form-section active" id="loginSection">
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>Имя пользователя или Email</label>
+                        <input type="text" id="loginIdentifier" placeholder="Введите логин или email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="submit" class="btn" id="loginBtn">
+                        <span class="btn-text">Войти в систему</span>
+                        <div class="loader"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- РЕГИСТРАЦИЯ -->
+            <div class="form-section inactive-left" id="registerSection">
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label>Имя пользователя</label>
+                        <input type="text" id="regUsername" placeholder="Придумайте логин" required minlength="3">
+                    </div>
+                    <div class="input-group">
+                        <label>Email адрес</label>
+                        <input type="email" id="regEmail" placeholder="vasya@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Пароль</label>
+                        <input type="password" id="regPassword" placeholder="Минимум 6 символов" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn" id="regBtn">
+                        <span class="btn-text">Создать аккаунт</span>
+                        <div class="loader"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер Дашборда (После входа) -->
+    <div class="dashboard-container" id="dashboardContainer">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="header">
+            <h1>Личный кабинет</h1>
+            <p>Вы успешно авторизованы в системе</p>
+        </div>
+
+        <div class="user-info">
+            <div>
+                <span class="info-label">ID Пользователя</span>
+                <span class="info-value" id="profileId">-</span>
+            </div>
+            <div>
+                <span class="info-label">Имя пользователя</span>
+                <span class="info-value" id="profileUsername">-</span>
+            </div>
+            <div>
+                <span class="info-label">Email</span>
+                <span class="info-value" id="profileEmail">-</span>
+            </div>
+        </div>
+
+        <div class="token-box">
+            <label>Ваш JWT Токен доступа (Storage):</label>
+            <textarea class="token-input" id="tokenDisplay" rows="3" readonly></textarea>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-outline" onclick="testApi()" id="testApiBtn">
+                <span class="btn-text">Проверить /api/test/user</span>
+                <div class="loader"></div>
+            </button>
+            <button class="btn" onclick="handleLogout()">Выйти</button>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        const API_BASE = '/api/auth';
+        let currentStatus = 'login'; // login or register
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
+
+        // ПЕРЕКЛЮЧЕНИЕ ТАБОВ
+        function switchTab(tab) {
+            if (currentStatus === tab) return;
+            currentStatus = tab;
+            
+            const loginSection = document.getElementById('loginSection');
+            const registerSection = document.getElementById('registerSection');
+            const tabIndicator = document.getElementById('tabIndicator');
+            const tabs = document.querySelectorAll('.tab');
+
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (tab === 'login') {
+                tabIndicator.style.transform = 'translateX(0)';
+                tabs[0].classList.add('active');
+                
+                registerSection.classList.remove('active');
+                loginSection.classList.remove('inactive-left');
+                loginSection.classList.add('active');
+                setTimeout(() => {
+                    registerSection.classList.add('inactive-left');
+                }, 50);
+                
+            } else {
+                tabIndicator.style.transform = 'translateX(100%)';
+                tabs[1].classList.add('active');
+
+                loginSection.classList.remove('active');
+                registerSection.classList.remove('inactive-left');
+                registerSection.classList.add('active');
+                setTimeout(() => {
+                    loginSection.classList.add('inactive-left');
+                }, 50);
+            }
+        }
+
+        // ПОКАЗ УВЕДОМЛЕНИЙ
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            
+            toastMsg.textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // ВХОД
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const identifier = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('loginPassword').value;
+
+            btn.classList.add('loading');
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usernameOrEmail: identifier, password: password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Вход выполнен успешно!');
+                    saveAuthData(data);
+                    renderDashboard(data);
+                } else {
+                    showToast(data.message || data || 'Ошибка входа. Проверьте данные', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сети сервера: ' + err.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        // РЕГИСТРАЦИЯ
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            btn.classList.add('loading');
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast('Успешная регистрация!');
+                    saveAuthData(data);
+                    renderDashboard(data);
+                } else {
+                    const errData = await response.text();
+                    showToast(errData || 'Ошибка регистрации', 'error');
+                }
+            } catch (err) {
+                showToast('Ошибка сервера: ' + err.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+
+        // СОХРАНЕНИЕ В LOCAL STORAGE
+        function saveAuthData(data) {
+            localStorage.setItem('jwtToken', data.token);
+            localStorage.setItem('userData', JSON.stringify({
+                id: data.id,
+                username: data.username,
+                email: data.email
+            }));
+        }
+
+        // ПРОВЕРКА АВТОРИЗАЦИИ
+        function checkAuth() {
+            const token = localStorage.getItem('jwtToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                renderDashboard(JSON.parse(userData), token);
+            } else {
+                document.getElementById('authContainer').classList.add('active');
+                document.getElementById('dashboardContainer').classList.remove('active');
+                document.getElementById('authContainer').style.display = 'block';
+            }
+        }
+
+        // ОТОБРАЖЕНИЕ ДАШБОРДА
+        function renderDashboard(userData, tk) {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('authContainer').classList.remove('active');
+            
+            // Populate data
+            document.getElementById('profileId').textContent = userData.id;
+            document.getElementById('profileUsername').textContent = userData.username;
+            document.getElementById('profileEmail').textContent = userData.email;
+            document.getElementById('avatarInitial').textContent = userData.username.charAt(0).toUpperCase();
+            
+            const token = tk || localStorage.getItem('jwtToken');
+            document.getElementById('tokenDisplay').value = token;
+
+            const dash = document.getElementById('dashboardContainer');
+            dash.style.display = 'block';
+            setTimeout(() => dash.classList.add('active'), 50);
+        }
+
+        // ВЫХОД
+        function handleLogout() {
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('userData');
+            document.getElementById('dashboardContainer').style.display = 'none';
+            document.getElementById('dashboardContainer').classList.remove('active');
+            
+            const auth = document.getElementById('authContainer');
+            auth.style.display = 'block';
+            
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('regPassword').value = '';
+            
+            showToast('Вы вышли из системы', 'success');
+            setTimeout(() => auth.classList.add('active'), 50);
+        }
+
+        // ТЕСТ ЗАЩИЩЕННОГО РОУТА
+        async function testApi() {
+            const token = localStorage.getItem('jwtToken');
+            const btn = document.getElementById('testApiBtn');
+            btn.classList.add('loading');
+            
+            try {
+                const response = await fetch('/api/test/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.text();
+                
+                if (response.ok) {
+                    showToast('Ответ: ' + data);
+                } else if (response.status === 401 || response.status === 403) {
+                    showToast('Доступ запрещен. Токен устарел.', 'error');
+                    handleLogout();
+                } else {
+                    showToast('Ошибка: ' + response.status, 'error');
+                }
+            } catch (e) {
+                showToast('Ошибка сети', 'error');
+            } finally {
+                btn.classList.remove('loading');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -7,7 +7,6 @@ import com.example.auth.model.Role;
 import com.example.auth.model.User;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.security.JwtUtils;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
